@@ -16,12 +16,7 @@ const ProductController = (function () {
         this.price = price;
     }
     const data = {
-        products: [
-            { id: 1, name: "pen", price: 12 },
-            { id: 2, name: "scissors", price: 13 },
-            { id: 3, name: "book", price: 14 },
-            { id: 4, name: "notebook", price: 15 },
-        ]
+        products: []
         ,
         selectedProduct: null,
         totalPrice: 0
@@ -46,8 +41,18 @@ const ProductController = (function () {
             data.products.push(newProduct);
             return newProduct;
 
+        },
+        getTotal : function(){
+                let total = 0;
+                data.products.forEach(function(item){
+                    total += item.price;
+                });
+
+                data.totalPrice = total;
+                return data.totalPrice;
         }
     }
+    
 })();
 // UI Controller
 
@@ -55,9 +60,12 @@ const UIController = (function () {
 
     const Selectors = {
         productList: "#item-list",
-        addButton: ".addBtn",
+        addButton: '.btn.btn-primary.btn-sm.addBtn',
         productName: "#productName",
-        productPrice : "#productPrice"
+        productPrice : "#productPrice",
+        productCard : "#productCard",
+        totalTL : "#total-tl",
+        totalDolar : "#total-dolar"
     }
 
     return {
@@ -89,6 +97,7 @@ const UIController = (function () {
             return Selectors;
         },
         addProduct: function(prd){
+            document.querySelector(Selectors.productCard).style.display = "block"
             var item = `
                  <tr>
 
@@ -104,6 +113,20 @@ const UIController = (function () {
                 </tr>
                 `;
                 document.querySelector(Selectors.productList).innerHTML += item;
+
+        },
+        clearInputs : function(){
+            document.querySelector(Selectors.productName).value = "";
+            document.querySelector(Selectors.productPrice).value = "";
+        },
+        hidecard : function(){
+            document.querySelector(Selectors.productCard).style.display = "none";
+            
+        },
+        showtotal: function(total){
+            currency = 43; //dolar tl hesabı, sonrasında apı ile exchange apıden bilgi alınacak
+            document.querySelector(Selectors.totalDolar).textContent = total;
+            document.querySelector(Selectors.totalTL).textContent = total*currency;
 
         }
     }
@@ -124,26 +147,43 @@ const AppCOntroller = (function (ProductCtrl, UICtrl) {
 
     }
     const productAddSubmit = function(e){
-        
-        const ProductName = document.querySelector(UISelectors.productName).value;
-        const ProductPrice = document.querySelector(UISelectors.productPrice).value;
+                e.preventDefault();
+
+        const productName = document.querySelector(UISelectors.productName).value;
+        const productPrice = document.querySelector(UISelectors.productPrice).value;
 
         
         if(productName!= "" && productPrice!= ""){
           const newProduct =   ProductCtrl.addProduct(productName,productPrice)
+            //add item
+            UICtrl.addProduct(newProduct);
 
-            UIController.addProduct(newProduct);
+            //get total amount
+            const total = ProductCtrl.getTotal();
+            console.log(total)
 
+            // show total
+            UICtrl.showtotal(total);
+
+            
+            //clear inputs
+            UICtrl.clearInputs();
         }
 
-        console.log(ProductName,ProductPrice)
-        e.preventDefault();
+        console.log(productName,productPrice)
     }
 
     return {
         init: function () {
             console.log("starting app...")
             const products = ProductCtrl.getProducts();
+            if (products.length==0){
+                UICtrl.hidecard();
+            }
+        else{
+            UICtrl.createProductList(products);
+        }
+            
             console.log(products)
 
             UICtrl.createProductList(products);
